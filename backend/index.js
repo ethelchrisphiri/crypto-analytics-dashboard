@@ -9,3 +9,6 @@ app.get('/', (req, res) => res.send('API running'));
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => console.log(`Server on port ${PORT}`));
+
+const coinsRouter = require('./routes/coins');
+app.use('/api/coins', coinsRouter);
