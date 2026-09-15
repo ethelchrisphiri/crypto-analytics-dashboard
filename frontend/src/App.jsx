@@ -6,6 +6,8 @@ function App() {
   const [coins, setCoins] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [search, setSearch] = useState('');
+  const [sortBy, setSortBy] = useState('market_cap_desc');
 
   useEffect(() => {
     axios
@@ -28,6 +30,21 @@ function App() {
     marketCap: coin.market_cap,
   }));
 
+  const sortFns = {
+    market_cap_desc: (a, b) => b.market_cap - a.market_cap,
+    price_desc: (a, b) => b.current_price - a.current_price,
+    change_desc: (a, b) => b.price_change_percentage_24h - a.price_change_percentage_24h,
+    change_asc: (a, b) => a.price_change_percentage_24h - b.price_change_percentage_24h,
+  };
+
+  const filteredCoins = coins
+    .filter(
+      (coin) =>
+        coin.name.toLowerCase().includes(search.toLowerCase()) ||
+        coin.symbol.toLowerCase().includes(search.toLowerCase())
+    )
+    .sort(sortFns[sortBy]);
+
   return (
     <div style={{ padding: '2rem', fontFamily: 'sans-serif', maxWidth: '900px', margin: '0 auto' }}>
       <h1>Crypto Analytics Dashboard</h1>
@@ -44,8 +61,26 @@ function App() {
       </ResponsiveContainer>
 
       <h2>All Coins</h2>
+
+      <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+        <input
+          type="text"
+          placeholder="Search coins..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          style={{ padding: '0.5rem', flex: 1, minWidth: '200px' }}
+        />
+        <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} style={{ padding: '0.5rem' }}>
+          <option value="market_cap_desc">Market Cap (High to Low)</option>
+          <option value="price_desc">Price (High to Low)</option>
+          <option value="change_desc">24h Change (High to Low)</option>
+          <option value="change_asc">24h Change (Low to High)</option>
+        </select>
+      </div>
+
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1rem' }}>
-        {coins.map((coin) => {
+        {filteredCoins.length === 0 && <p>No coins match your search.</p>}
+        {filteredCoins.map((coin) => {
           const isPositive = coin.price_change_percentage_24h >= 0;
           return (
             <div key={coin.id} style={{ border: '1px solid #e5e7eb', borderRadius: '8px', padding: '1rem' }}>
