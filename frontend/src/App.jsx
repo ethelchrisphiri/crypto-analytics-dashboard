@@ -4,6 +4,8 @@ import {
   BarChart, Bar, Cell, LineChart, Line,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts';
+const API_URL = import.meta.env.VITE_API_URL;
+
 
 const COIN_COLORS = {
   bitcoin: '#f7931a',
@@ -43,7 +45,7 @@ function App() {
   useEffect(() => {
     const fetchCoins = () => {
       axios
-        .get('http://localhost:4000/api/coins/markets')
+        .get(`${API_URL}/api/coins/markets`)
         .then((res) => {
           setCoins(res.data);
           setLastUpdated(new Date());
@@ -64,7 +66,7 @@ function App() {
     setSelectedCoin(coin);
     setHistoryLoading(true);
     axios
-      .get(`http://localhost:4000/api/coins/history/${coin.id}`)
+      .get(`${API_URL}/api/coins/history/${coin.id}`)
       .then((res) => {
         setHistory(res.data);
         setHistoryLoading(false);
