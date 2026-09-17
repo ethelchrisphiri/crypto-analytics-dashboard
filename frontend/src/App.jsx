@@ -15,19 +15,28 @@ function App() {
   const [selectedCoin, setSelectedCoin] = useState(null);
   const [history, setHistory] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(false);
-
-  useEffect(() => {
+  const [lastUpdated, setLastUpdated] = useState(null);
+useEffect(() => {
+  const fetchCoins = () => {
     axios
       .get('http://localhost:4000/api/coins/markets')
       .then((res) => {
         setCoins(res.data);
+        setLastUpdated(new Date());
         setLoading(false);
       })
       .catch(() => {
         setError('Failed to load coin data');
         setLoading(false);
       });
-  }, []);
+  };
+
+  fetchCoins(); // initial load
+
+  const interval = setInterval(fetchCoins, 60000); 
+
+  return () => clearInterval(interval); 
+}, []);
 
   const openCoinHistory = (coin) => {
     setSelectedCoin(coin);
@@ -75,6 +84,11 @@ function App() {
   return (
     <div style={{ padding: '2rem', fontFamily: 'sans-serif', maxWidth: '900px', margin: '0 auto' }}>
       <h1>Crypto Analytics Dashboard</h1>
+      {lastUpdated && (
+  <p style={{ color: '#666', fontSize: '0.9rem' }}>
+    Last updated: {lastUpdated.toLocaleTimeString()}
+  </p>
+)}
 
       <h2>Top 10 by Market Cap</h2>
       <ResponsiveContainer width="100%" height={300}>

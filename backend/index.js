@@ -15,3 +15,4 @@ app.use('/api/coins', coinsRouter);
 
 const historyRouter = require('./routes/history');
 app.use('/api/coins/history', historyRouter);
+
