@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import {
+  BarChart, Bar, LineChart, Line,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+} from 'recharts';
 
 function App() {
   const [coins, setCoins] = useState([]);
@@ -8,6 +11,10 @@ function App() {
   const [error, setError] = useState(null);
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState('market_cap_desc');
+
+  const [selectedCoin, setSelectedCoin] = useState(null);
+  const [history, setHistory] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
 
   useEffect(() => {
     axios
@@ -21,6 +28,26 @@ function App() {
         setLoading(false);
       });
   }, []);
+
+  const openCoinHistory = (coin) => {
+    setSelectedCoin(coin);
+    setHistoryLoading(true);
+    axios
+      .get(`http://localhost:4000/api/coins/history/${coin.id}`)
+      .then((res) => {
+        setHistory(res.data);
+        setHistoryLoading(false);
+      })
+      .catch(() => {
+        setHistory([]);
+        setHistoryLoading(false);
+      });
+  };
+
+  const closeModal = () => {
+    setSelectedCoin(null);
+    setHistory([]);
+  };
 
   if (loading) return <p style={{ padding: '2rem', fontFamily: 'sans-serif' }}>Loading...</p>;
   if (error) return <p style={{ padding: '2rem', fontFamily: 'sans-serif' }}>{error}</p>;
@@ -83,7 +110,16 @@ function App() {
         {filteredCoins.map((coin) => {
           const isPositive = coin.price_change_percentage_24h >= 0;
           return (
-            <div key={coin.id} style={{ border: '1px solid #e5e7eb', borderRadius: '8px', padding: '1rem' }}>
+            <div
+              key={coin.id}
+              onClick={() => openCoinHistory(coin)}
+              style={{
+                border: '1px solid #e5e7eb',
+                borderRadius: '8px',
+                padding: '1rem',
+                cursor: 'pointer',
+              }}
+            >
               <img src={coin.image} alt={coin.name} width={32} height={32} />
               <h3 style={{ margin: '0.5rem 0 0.25rem' }}>{coin.name} ({coin.symbol.toUpperCase()})</h3>
               <p style={{ margin: 0, fontSize: '1.2rem' }}>${coin.current_price.toLocaleString()}</p>
@@ -94,6 +130,44 @@ function App() {
           );
         })}
       </div>
+
+      {selectedCoin && (
+        <div
+          onClick={closeModal}
+          style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: 'white', borderRadius: '8px', padding: '1.5rem',
+              width: '90%', maxWidth: '600px',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h2 style={{ margin: 0 }}>{selectedCoin.name} — 7 Day Price</h2>
+              <button onClick={closeModal} style={{ cursor: 'pointer' }}>✕</button>
+            </div>
+
+            {historyLoading ? (
+              <p>Loading chart...</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={250}>
+                <LineChart data={history}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="date" />
+                  <YAxis domain={['auto', 'auto']} tickFormatter={(v) => `$${v.toFixed(0)}`} />
+                  <Tooltip formatter={(value) => `$${value.toFixed(2)}`} />
+                  <Line type="monotone" dataKey="price" stroke="#4f46e5" dot={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

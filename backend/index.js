@@ -12,3 +12,6 @@ app.listen(PORT, () => console.log(`Server on port ${PORT}`));
 
 const coinsRouter = require('./routes/coins');
 app.use('/api/coins', coinsRouter);
+
+const historyRouter = require('./routes/history');
+app.use('/api/coins/history', historyRouter);
